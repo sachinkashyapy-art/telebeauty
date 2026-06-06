@@ -204,7 +204,7 @@ html, body {
 /* No camera state */
 #no-cam {
   position: absolute; inset: 0;
-  display: flex; flex-direction: column;
+  display: none; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 14px; color: rgba(255,255,255,0.6);
   text-align: center; padding: 40px;
@@ -541,6 +541,7 @@ async function startCam() {
     vid.style.transform = isFront ? 'scaleX(-1)' : 'scaleX(1)';
     document.getElementById('no-cam').style.display = 'none';
   } catch(e) {
+    document.getElementById('no-cam').style.display = 'flex';
     toast('Camera permission denied');
   }
 }
