@@ -3,1150 +3,733 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TeleBeauty">
 <title>TeleBeauty</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c26;
-    --border: rgba(255,255,255,0.08);
-    --purple: #a855f7;
-    --purple-light: #c084fc;
-    --purple-dark: #7c3aed;
-    --pink: #ec4899;
-    --text: #f1f0ff;
-    --text-2: #8b8a9e;
-    --text-3: #5a596e;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+html, body {
+  width: 100%; height: 100%;
+  background: #000;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  #app {
-    width: 100vw; height: 100dvh;
-    display: flex; flex-direction: column;
-    position: relative; overflow: hidden;
-  }
+#app {
+  width: 100vw; height: 100dvh;
+  position: relative; overflow: hidden;
+  background: #000;
+}
 
-  /* Camera layer */
-  #camera-wrap {
-    position: absolute; inset: 0;
-    background: #000;
-    display: flex; align-items: center; justify-content: center;
-  }
+/* ── CAMERA ── */
+#video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
 
-  #video {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1);
-    display: block;
-  }
+/* ── TELEPROMPTER ── */
+#prompter-zone {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 38%;
+  z-index: 10;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.72) 70%, transparent 100%);
+  display: none;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding-top: calc(var(--safe-top) + 10px);
+}
+#prompter-zone.on { display: flex; }
 
-  #canvas-filter {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    display: none;
-  }
+#prompter-text {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.55;
+  padding: 0 20px;
+  position: absolute;
+  width: 100%;
+  top: calc(var(--safe-top) + 10px);
+}
 
-  /* Overlay gradient */
-  #overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(10,10,15,0.6) 0%,
-      transparent 30%,
-      transparent 60%,
-      rgba(10,10,15,0.7) 100%
-    );
-    pointer-events: none;
-    z-index: 10;
-  }
+/* speed bar inside prompter */
+#speed-bar {
+  position: absolute;
+  bottom: 8px; left: 20px; right: 20px;
+  display: flex; align-items: center; gap: 10px;
+  pointer-events: all;
+}
+#speed-bar span { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+#speed-slider {
+  flex: 1; height: 3px;
+  -webkit-appearance: none; appearance: none;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px; outline: none; cursor: pointer;
+}
+#speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; cursor: pointer;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+}
 
-  /* Top bar */
-  #topbar {
-    position: absolute; top: 0; left: 0; right: 0;
-    padding: calc(var(--safe-top) + 16px) 20px 16px; display: none;
-    display: flex; align-items: center; justify-content: space-between;
-    z-index: 20;
-  }
+/* ── BOTTOM PANEL ── */
+#bottom {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 10;
+  padding: 0 0 calc(var(--safe-bottom) + 16px);
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 60%, transparent 100%);
+}
 
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px; font-weight: 800;
-    background: linear-gradient(135deg, #c084fc, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.5px;
-  }
+/* Filter strip */
+#filter-strip {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px 16px 6px;
+  scrollbar-width: none;
+}
+#filter-strip::-webkit-scrollbar { display: none; }
 
-  .top-icons { display: flex; gap: 10px; }
+.flt {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer;
+}
+.flt-swatch {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  border: 2.5px solid transparent;
+  transition: border-color 0.2s;
+}
+.flt.active .flt-swatch { border-color: #fff; }
+.flt span { font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 0.2px; }
+.flt.active span { color: #fff; font-weight: 600; }
 
-  .icon-btn {
-    width: 40px; height: 40px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #fff;
-  }
-  .icon-btn:active { transform: scale(0.9); }
-  .icon-btn.active { background: var(--purple); border-color: var(--purple-light); }
+/* Controls row */
+#ctrl-row {
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 10px 24px 6px;
+}
 
-  /* Recording indicator */
-  #rec-indicator {
-    display: none;
-    position: absolute; top: calc(var(--safe-top) + 22px); left: 50%;
-    transform: translateX(-50%);
-    background: rgba(239,68,68,0.9);
-    backdrop-filter: blur(8px);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 13px; font-weight: 600;
-    letter-spacing: 0.5px;
-    display: none; align-items: center; gap: 7px; left: 16px; top: calc(var(--safe-top) + 16px);
-    z-index: 30;
-  }
-  #rec-indicator .dot {
-    width: 8px; height: 8px;
-    background: #fff;
-    border-radius: 50%;
-    animation: blink 1s infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  #rec-indicator.visible { display: flex; }
+.ctrl-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer;
+}
+.ctrl-btn .ic {
+  width: 50px; height: 50px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.ctrl-btn .ic svg { width: 22px; height: 22px; color: #fff; }
+.ctrl-btn span { font-size: 10px; color: rgba(255,255,255,0.6); }
+.ctrl-btn.on .ic { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.5); }
+.ctrl-btn:active .ic { transform: scale(0.9); }
 
-  /* Beauty controls panel */
-  #beauty-panel {
-    position: absolute; right: 0; top: 50%;
-    transform: translateY(-50%);
-    z-index: 20;
-    display: flex; flex-direction: column; gap: 10px;
-    padding-right: 12px;
-  }
+/* Record button */
+#rec-btn {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  border: 3px solid rgba(255,255,255,0.4);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+  position: relative;
+}
+#rec-btn::after {
+  content: '';
+  position: absolute; inset: -7px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.15);
+}
+#rec-inner {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #ef4444;
+  transition: all 0.25s;
+  box-shadow: 0 0 16px rgba(239,68,68,0.5);
+}
+#rec-btn.recording #rec-inner {
+  border-radius: 10px;
+  width: 30px; height: 30px;
+}
+#rec-btn:active { transform: scale(0.94); }
 
-  .beauty-btn {
-    width: 46px; height: 46px;
-    background: rgba(15,15,22,0.75);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 14px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; gap: 3px;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .beauty-btn:active { transform: scale(0.92); }
-  .beauty-btn.active { border-color: var(--purple-light); background: rgba(168,85,247,0.2); }
-  .beauty-btn span { font-size: 9px; color: var(--text-2); letter-spacing: 0.3px; }
-  .beauty-btn svg { width: 20px; height: 20px; }
+/* Rec timer pill */
+#rec-pill {
+  position: absolute;
+  top: calc(var(--safe-top) + 14px);
+  left: 50%; transform: translateX(-50%);
+  background: rgba(239,68,68,0.9);
+  border-radius: 20px; padding: 5px 14px;
+  font-size: 13px; font-weight: 700; color: #fff;
+  display: none; align-items: center; gap: 7px;
+  z-index: 15; white-space: nowrap;
+}
+#rec-pill.on { display: flex; }
+#rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-  /* Filter slider popup */
-  #filter-popup {
-    position: absolute; right: 70px; top: 50%;
-    transform: translateY(-50%);
-    background: rgba(13,13,20,0.92);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 16px;
-    z-index: 25;
-    min-width: 220px;
-    display: none;
-  }
-  #filter-popup.open { display: block; }
-  #filter-popup h4 {
-    font-family: 'Syne', sans-serif;
-    font-size: 14px; font-weight: 700;
-    color: var(--purple-light);
-    margin-bottom: 14px; letter-spacing: 0.5px;
-  }
-  .filter-row {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 12px;
-  }
-  .filter-row label { font-size: 12px; color: var(--text-2); width: 72px; }
-  .filter-row input[type=range] {
-    flex: 1; height: 3px;
-    -webkit-appearance: none; appearance: none;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px; outline: none; cursor: pointer;
-  }
-  .filter-row input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--purple-light);
-    border: 2px solid #fff;
-    cursor: pointer;
-  }
-  .filter-val { font-size: 12px; color: var(--text-2); width: 28px; text-align: right; }
+/* Flip button */
+#flip-btn {
+  position: absolute;
+  top: calc(var(--safe-top) + 14px); right: 16px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 15;
+  color: #fff;
+}
+#flip-btn svg { width: 18px; height: 18px; }
+#flip-btn:active { transform: scale(0.9); }
 
-  /* Teleprompter */
-  #teleprompter-wrap {
-    position: absolute; left: 0; right: 0;
-    top: 0; height: 140px;
-    z-index: 20;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  #teleprompter-wrap.visible { display: flex; }
+/* No camera state */
+#no-cam {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; color: rgba(255,255,255,0.6);
+  text-align: center; padding: 40px;
+  z-index: 5;
+}
+#no-cam p { font-size: 14px; line-height: 1.6; }
+#no-cam button {
+  background: #fff; color: #000;
+  border: none; border-radius: 12px;
+  padding: 13px 30px; font-size: 15px; font-weight: 600;
+  cursor: pointer; margin-top: 6px;
+}
 
-  #tp-mask-top, #tp-mask-bottom {
-    flex-shrink: 0;
-    height: 50px;
-    pointer-events: none;
-  }
-  #tp-mask-top { background: linear-gradient(to bottom, rgba(10,10,15,0.95), transparent); }
-  #tp-mask-bottom { background: linear-gradient(to top, rgba(10,10,15,0.95), transparent); }
+/* Script panel */
+#script-panel {
+  position: absolute; inset: 0;
+  background: #0a0a0a;
+  z-index: 50; display: none;
+  flex-direction: column;
+  padding-top: var(--safe-top);
+}
+#script-panel.open { display: flex; }
 
-  #tp-scroll-container {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    pointer-events: none;
-  }
+.panel-hdr {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.panel-hdr h3 { flex: 1; font-size: 17px; font-weight: 600; color: #fff; }
+.back-btn {
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: rgba(255,255,255,0.7);
+}
 
-  #tp-text {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 18px;
-    font-weight: 500;
-    line-height: 1.6;
-    color: #fff;
-    text-align: center;
-    padding: 0 20px;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.8);
-    transition: transform 0.05s linear;
-    position: absolute; width: 100%;
-  }
+.panel-body { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; overflow: hidden; }
 
-  /* Bottom controls */
-  #bottom-bar {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 0 24px calc(var(--safe-bottom) + 28px);
-    z-index: 20;
-  }
+#script-ta {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; color: #fff;
+  font-size: 15px; line-height: 1.7;
+  padding: 14px; resize: none; outline: none;
+  font-family: inherit;
+}
+#script-ta:focus { border-color: rgba(255,255,255,0.3); }
+#script-ta::placeholder { color: rgba(255,255,255,0.25); }
 
-  /* Record button area */
-  #record-area {
-    display: flex; align-items: center; justify-content: center;
-    gap: 28px; margin-bottom: 20px;
-  }
+.save-btn {
+  background: #fff; color: #000;
+  border: none; border-radius: 14px;
+  padding: 15px; font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.3px;
+}
 
-  .side-ctrl {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    cursor: pointer;
-  }
-  .side-ctrl-btn {
-    width: 48px; height: 48px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 16px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; color: #fff;
-  }
-  .side-ctrl-btn:active { transform: scale(0.9); }
-  .side-ctrl-btn.active { background: rgba(168,85,247,0.3); border-color: var(--purple-light); }
-  .side-ctrl span { font-size: 10px; color: var(--text-2); letter-spacing: 0.3px; }
+/* Saved panel */
+#saved-panel {
+  position: absolute; inset: 0;
+  background: #0a0a0a;
+  z-index: 50; display: none;
+  flex-direction: column;
+  padding-top: var(--safe-top);
+}
+#saved-panel.open { display: flex; }
+#saved-list { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
 
-  #rec-btn {
-    width: 76px; height: 76px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(16px);
-    border: 3px solid rgba(255,255,255,0.3);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.25s;
-    position: relative;
-  }
-  #rec-btn::before {
-    content: '';
-    position: absolute; inset: -6px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.12);
-  }
-  #rec-btn .rec-inner {
-    width: 50px; height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    transition: all 0.25s;
-    box-shadow: 0 0 20px rgba(239,68,68,0.4);
-  }
-  #rec-btn.recording .rec-inner {
-    border-radius: 10px;
-    width: 32px; height: 32px;
-    background: #ef4444;
-  }
-  #rec-btn:active { transform: scale(0.94); }
+.saved-item {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+}
+.saved-ic {
+  width: 50px; height: 50px; border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.5); flex-shrink: 0;
+}
+.saved-info { flex: 1; min-width: 0; }
+.saved-name { font-size: 14px; font-weight: 500; color: #fff; }
+.saved-meta { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+.saved-actions { display: flex; gap: 8px; }
+.sav-btn {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.6); transition: all 0.2s;
+}
+.sav-btn:active { transform: scale(0.9); }
 
-  /* Tab bar */
-  #tab-bar {
-    display: flex; align-items: center; justify-content: space-around;
-    background: rgba(13,13,20,0.85);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 8px 4px;
-  }
+.empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  color: rgba(255,255,255,0.25); padding: 40px; text-align: center;
+}
+.empty p { font-size: 14px; line-height: 1.6; }
 
-  .tab-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 6px 0; cursor: pointer; border-radius: 12px;
-    transition: all 0.2s;
-    color: var(--text-3);
-  }
-  .tab-item.active { color: var(--purple-light); }
-  .tab-item span { font-size: 10px; letter-spacing: 0.3px; }
-  .tab-item svg { width: 22px; height: 22px; }
+/* Tab bar */
+#tabbar {
+  display: flex;
+  background: rgba(15,15,15,0.9);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: calc(var(--safe-bottom) + 4px);
+}
+.tab {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; padding: 10px 0;
+  cursor: pointer; color: rgba(255,255,255,0.35);
+  transition: color 0.2s; font-size: 10px;
+}
+.tab svg { width: 22px; height: 22px; }
+.tab.on { color: #fff; }
 
-  /* Script editor panel */
-  #script-panel {
-    position: absolute; inset: 0;
-    background: var(--bg);
-    z-index: 50;
-    display: none;
-    flex-direction: column;
-    padding-top: var(--safe-top);
-  }
-  #script-panel.open { display: flex; }
-
-  .panel-header {
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .panel-header h3 {
-    font-family: 'Syne', sans-serif;
-    font-size: 18px; font-weight: 700;
-    flex: 1;
-  }
-  .close-btn {
-    width: 36px; height: 36px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-2);
-  }
-
-  .panel-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 16px 20px; gap: 12px; }
-
-  #script-textarea {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px; line-height: 1.7;
-    padding: 16px; resize: none; outline: none;
-  }
-  #script-textarea:focus { border-color: rgba(168,85,247,0.4); }
-  #script-textarea::placeholder { color: var(--text-3); }
-
-  .tp-controls {
-    display: flex; gap: 10px; align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 12px 16px;
-  }
-  .tp-label { font-size: 12px; color: var(--text-2); white-space: nowrap; }
-  .tp-controls input[type=range] {
-    flex: 1; height: 3px;
-    -webkit-appearance: none; appearance: none;
-    background: rgba(255,255,255,0.15);
-    border-radius: 2px; outline: none; cursor: pointer;
-  }
-  .tp-controls input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px; border-radius: 50%;
-    background: var(--purple-light); border: 2px solid #fff; cursor: pointer;
-  }
-
-  .btn-row { display: flex; gap: 10px; }
-
-  .btn {
-    flex: 1; padding: 14px;
-    border-radius: 14px; border: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-    letter-spacing: 0.3px;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--purple-dark), var(--purple));
-    color: #fff;
-  }
-  .btn-secondary {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text-2);
-  }
-
-  /* Recordings panel */
-  #recordings-panel {
-    position: absolute; inset: 0;
-    background: var(--bg);
-    z-index: 50;
-    display: none;
-    flex-direction: column;
-    padding-top: var(--safe-top);
-  }
-  #recordings-panel.open { display: flex; }
-
-  #recordings-list {
-    flex: 1; overflow-y: auto;
-    padding: 16px 20px;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-
-  .rec-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 16px;
-    display: flex; align-items: center; gap: 14px;
-  }
-
-  .rec-thumb {
-    width: 56px; height: 56px;
-    border-radius: 12px;
-    background: var(--surface2);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    color: var(--purple-light);
-  }
-
-  .rec-info { flex: 1; min-width: 0; }
-  .rec-name { font-size: 14px; font-weight: 500; color: var(--text); }
-  .rec-meta { font-size: 12px; color: var(--text-2); margin-top: 3px; }
-
-  .rec-actions { display: flex; gap: 8px; }
-  .rec-action-btn {
-    width: 36px; height: 36px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-2);
-    transition: all 0.2s;
-  }
-  .rec-action-btn:active { transform: scale(0.9); }
-  .rec-action-btn.play { color: var(--purple-light); }
-  .rec-action-btn.dl { color: #34d399; }
-
-  .empty-state {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 12px;
-    color: var(--text-3);
-    padding: 40px;
-  }
-  .empty-state p { font-size: 14px; text-align: center; line-height: 1.6; }
-
-  /* Toast */
-  #toast {
-    position: fixed; bottom: 100px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: rgba(30,30,42,0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px;
-    padding: 10px 20px;
-    font-size: 13px;
-    color: var(--text);
-    z-index: 100;
-    opacity: 0;
-    transition: all 0.3s;
-    white-space: nowrap;
-  }
-  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  /* Install banner */
-  #install-banner {
-    position: absolute; bottom: 90px; left: 16px; right: 16px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(168,85,247,0.9));
-    backdrop-filter: blur(12px);
-    border-radius: 16px;
-    padding: 14px 16px;
-    z-index: 40;
-    display: none;
-    align-items: center; gap: 12px;
-  }
-  #install-banner.visible { display: flex; }
-  #install-banner p { flex: 1; font-size: 13px; line-height: 1.4; }
-  #install-banner strong { display: block; font-weight: 600; margin-bottom: 2px; }
-  .install-btn {
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 10px;
-    color: #fff; font-size: 13px; font-weight: 600;
-    padding: 8px 14px; cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-  .dismiss-btn {
-    width: 28px; height: 28px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: rgba(255,255,255,0.7);
-    flex-shrink: 0;
-  }
-
-  /* No camera placeholder */
-  #no-camera {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 16px;
-    color: var(--text-2); text-align: center; padding: 40px;
-  }
-  #no-camera svg { opacity: 0.4; }
-  #no-camera p { font-size: 14px; line-height: 1.6; }
-
-  .start-cam-btn {
-    background: linear-gradient(135deg, var(--purple-dark), var(--purple));
-    color: #fff;
-    border: none; border-radius: 14px;
-    padding: 14px 32px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px; font-weight: 600;
-    cursor: pointer; margin-top: 8px;
-    transition: all 0.2s;
-  }
-
-  /* Timer display */
-  #rec-timer {
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 700;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.9);
-  }
+/* Toast */
+#toast {
+  position: fixed; bottom: 110px; left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(30,30,30,0.95);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 9px 18px;
+  font-size: 13px; color: #fff;
+  z-index: 100; opacity: 0;
+  transition: all 0.25s; white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Camera layer -->
-  <div id="camera-wrap">
-    <video id="video" autoplay muted playsinline></video>
-    <canvas id="canvas-filter"></canvas>
-    <div id="no-camera">
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-        <circle cx="12" cy="13" r="4"/>
-      </svg>
-      <p>Camera access required for TeleBeauty</p>
-      <button class="start-cam-btn" onclick="startCamera()">Enable Camera</button>
+  <video id="video" autoplay muted playsinline></video>
+
+  <div id="no-cam">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+    <p>Camera access needed</p>
+    <button onclick="startCam()">Enable Camera</button>
+  </div>
+
+  <!-- Teleprompter zone -->
+  <div id="prompter-zone">
+    <div id="prompter-text"></div>
+    <div id="speed-bar">
+      <span>Slow</span>
+      <input type="range" id="speed-slider" min="5" max="150" value="40"
+        oninput="onSpeedChange(this.value)">
+      <span>Fast</span>
     </div>
   </div>
 
-  <!-- Gradient overlay -->
-  <div id="overlay"></div>
-
-  <!-- Top bar -->
-  <!-- Minimal top controls - no logo, just flip + rec indicator -->
-  <div style="position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 0;display:flex;align-items:center;justify-content:flex-end;z-index:20;gap:10px;">
-    <div id="rec-indicator" style="border-radius:20px;padding:6px 12px;font-size:13px;font-weight:600;">
-      <div class="dot"></div>
-      <span id="rec-timer">0:00</span>
-    </div>
-    <div class="icon-btn" id="flip-btn" onclick="flipCamera()" title="Flip">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M1 4v6h6M23 20v-6h-6"/>
-        <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
-      </svg>
-    </div>
+  <!-- Recording pill -->
+  <div id="rec-pill">
+    <div id="rec-dot"></div>
+    <span id="rec-timer">0:00</span>
   </div>
 
-  <!-- Beauty panel -->
-  <div id="beauty-panel">
-    <div class="beauty-btn" id="filter-toggle-btn" onclick="toggleFilterPanel()" title="Beauty Filters">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-      </svg>
-      <span>Beauty</span>
-    </div>
-    <div class="beauty-btn" id="smooth-btn" onclick="toggleSmooth()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
-        <path d="M12 6a6 6 0 100 12A6 6 0 0012 6z" fill="currentColor" opacity="0.2"/>
-      </svg>
-      <span>Smooth</span>
-    </div>
-    <div class="beauty-btn" id="bright-btn" onclick="toggleBright()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="5"/>
-        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-      </svg>
-      <span>Glow</span>
-    </div>
-    <div class="beauty-btn" id="filter-color-btn" onclick="cycleColorFilter()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/>
-        <circle cx="8" cy="10" r="2" fill="currentColor" opacity="0.3"/>
-        <circle cx="16" cy="10" r="2" fill="currentColor" opacity="0.3"/>
-        <path d="M8 15s1.5 2 4 2 4-2 4-2"/>
-      </svg>
-      <span>Filter</span>
-    </div>
+  <!-- Flip -->
+  <div id="flip-btn" onclick="flipCam()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M1 4v6h6M23 20v-6h-6"/>
+      <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
+    </svg>
   </div>
 
-  <!-- Filter controls popup -->
-  <div id="filter-popup">
-    <h4>Beauty Controls</h4>
-    <div class="filter-row">
-      <label>Brightness</label>
-      <input type="range" id="brightness" min="80" max="150" value="110" oninput="applyFilters()">
-      <span class="filter-val" id="brightness-val">110</span>
-    </div>
-    <div class="filter-row">
-      <label>Contrast</label>
-      <input type="range" id="contrast" min="80" max="130" value="105" oninput="applyFilters()">
-      <span class="filter-val" id="contrast-val">105</span>
-    </div>
-    <div class="filter-row">
-      <label>Saturation</label>
-      <input type="range" id="saturation" min="80" max="150" value="110" oninput="applyFilters()">
-      <span class="filter-val" id="saturation-val">110</span>
-    </div>
-    <div class="filter-row">
-      <label>Warmth</label>
-      <input type="range" id="warmth" min="0" max="30" value="8" oninput="applyFilters()">
-      <span class="filter-val" id="warmth-val">8</span>
-    </div>
-    <div class="filter-row">
-      <label>Blur</label>
-      <input type="range" id="blur" min="0" max="5" step="0.5" value="0" oninput="applyFilters()">
-      <span class="filter-val" id="blur-val">0</span>
-    </div>
-  </div>
+  <!-- Bottom panel -->
+  <div id="bottom">
+    <!-- Filter strip -->
+    <div id="filter-strip"></div>
 
-  <!-- Teleprompter -->
-  <div id="teleprompter-wrap">
-    <div id="tp-mask-top"></div>
-    <div id="tp-scroll-container">
-      <div id="tp-text"></div>
-    </div>
-    <div id="tp-mask-bottom"></div>
-    <div style="display:flex;align-items:center;gap:8px;padding:4px 16px 2px;pointer-events:all;"><span style="font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;">Speed</span><input type="range" id="tp-speed-live" min="10" max="120" value="40" style="flex:1;height:3px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.2);border-radius:2px;outline:none;cursor:pointer;" oninput="tpSpeed=parseInt(this.value);document.getElementById('tp-speed').value=this.value;document.getElementById('tp-speed-val').textContent=this.value;localStorage.setItem('tb_speed',this.value);"><span style="font-size:11px;color:rgba(255,255,255,0.55);min-width:22px;text-align:right;" id="tp-speed-live-val">40</span></div>
-  </div>
-
-  <!-- Bottom controls -->
-  <div id="bottom-bar">
-    <div id="record-area">
-      <div class="side-ctrl" onclick="toggleTeleprompter()">
-        <div class="side-ctrl-btn" id="tp-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <!-- Controls -->
+    <div id="ctrl-row">
+      <div class="ctrl-btn" id="btn-prompter" onclick="togglePrompter()">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <path d="M8 21h8M12 17v4"/>
-            <path d="M7 8h10M7 12h6"/>
+            <path d="M8 21h8M12 17v4M7 8h10M7 12h6"/>
           </svg>
         </div>
-        <span>Script</span>
+        <span>Prompter</span>
       </div>
 
-      <div id="rec-btn" onclick="toggleRecord()">
-        <div class="rec-inner"></div>
+      <div id="rec-btn" onclick="toggleRec()">
+        <div id="rec-inner"></div>
       </div>
 
-      <div class="side-ctrl" onclick="openScriptPanel()">
-        <div class="side-ctrl-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14,2 14,8 20,8"/>
-            <path d="M16 13H8M16 17H8M10 9H8"/>
+      <div class="ctrl-btn" id="btn-smooth" onclick="toggleSmooth()">
+        <div class="ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
           </svg>
         </div>
-        <span>Edit</span>
+        <span>Smooth</span>
       </div>
     </div>
 
-    <div id="tab-bar">
-      <div class="tab-item active" id="tab-camera" onclick="switchTab('camera')">
+    <!-- Tab bar -->
+    <div id="tabbar">
+      <div class="tab on" id="tab-cam" onclick="showTab('cam')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
           <circle cx="12" cy="13" r="4"/>
         </svg>
-        <span>Camera</span>
+        Camera
       </div>
-      <div class="tab-item" id="tab-recordings" onclick="switchTab('recordings')">
+      <div class="tab" id="tab-saved" onclick="showTab('saved')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polygon points="5,3 19,12 5,21"/>
         </svg>
-        <span>Saved</span>
+        Saved
       </div>
-      <div class="tab-item" id="tab-script" onclick="switchTab('script')">
+      <div class="tab" id="tab-script" onclick="showTab('script')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
           <polyline points="14,2 14,8 20,8"/>
+          <line x1="8" y1="13" x2="16" y2="13"/>
+          <line x1="8" y1="17" x2="13" y2="17"/>
         </svg>
-        <span>Script</span>
+        Script
       </div>
     </div>
   </div>
 
-  <!-- Script Panel -->
+  <!-- Script panel -->
   <div id="script-panel">
-    <div class="panel-header">
-      <div class="close-btn" onclick="closeScriptPanel()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+    <div class="panel-hdr">
+      <div class="back-btn" onclick="closePanel('script')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </div>
       <h3>Script Editor</h3>
     </div>
     <div class="panel-body">
-      <textarea id="script-textarea" placeholder="Type or paste your script here...
+      <textarea id="script-ta" placeholder="Type or paste your script here...
 
-The teleprompter will scroll this text on screen while you record. Adjust scroll speed in the controls below.
-
-Tip: Keep sentences short for better readability on camera."></textarea>
-      <div class="tp-controls">
-        <span class="tp-label">Speed</span>
-        <input type="range" id="tp-speed" min="10" max="120" value="40">
-        <span class="filter-val" id="tp-speed-val">40</span>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-secondary" onclick="closeScriptPanel()">Cancel</button>
-        <button class="btn btn-primary" onclick="saveScript()">Save Script</button>
-      </div>
+TeleBeauty will scroll this text on screen while you record."></textarea>
+      <button class="save-btn" onclick="saveScript()">Save & Use Script</button>
     </div>
   </div>
 
-  <!-- Recordings Panel -->
-  <div id="recordings-panel">
-    <div class="panel-header">
-      <div class="close-btn" onclick="closeRecordingsPanel()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
+  <!-- Saved panel -->
+  <div id="saved-panel">
+    <div class="panel-hdr">
+      <div class="back-btn" onclick="closePanel('saved')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </div>
       <h3>Saved Recordings</h3>
     </div>
-    <div id="recordings-list"></div>
-  </div>
-
-  <!-- Install banner -->
-  <div id="install-banner">
-    <p>
-      <strong>Install TeleBeauty</strong>
-      Add to Home Screen for app experience
-    </p>
-    <button class="install-btn" onclick="installApp()">Install</button>
-    <div class="dismiss-btn" onclick="dismissInstall()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <path d="M18 6L6 18M6 6l12 12"/>
-      </svg>
-    </div>
+    <div id="saved-list"></div>
   </div>
 
   <div id="toast"></div>
 </div>
 
 <script>
-// ─── State ───────────────────────────────────────────────
+// ── State ──────────────────────────────────────────
 let stream = null;
-let mediaRecorder = null;
-let recordedChunks = [];
-let recordings = JSON.parse(localStorage.getItem('tb_recordings') || '[]');
-let isRecording = false;
-let recTimerInterval = null;
-let recSeconds = 0;
 let isFront = true;
-let teleprompterActive = false;
-let tpScrollInterval = null;
-let tpOffset = 0;
+let mediaRecorder = null;
+let recChunks = [];
+let recordings = [];
+let isRec = false;
+let recSec = 0;
+let recTimer = null;
+let prompterOn = false;
+let prompterInterval = null;
+let prompterOffset = 0;
 let scriptText = localStorage.getItem('tb_script') || '';
-let tpSpeed = parseInt(localStorage.getItem('tb_speed') || '40');
-let filtersEnabled = { smooth: false, bright: false };
-let colorFilter = 0; // 0=none, 1=warm, 2=cool, 3=rose
-let animFrame = null;
-let filterPopupOpen = false;
+let smoothOn = false;
+let activeFilter = 0;
+let speed = 40;
 
-const colorFilters = ['none', 'warm', 'cool', 'rose', 'vivid'];
-const colorFilterNames = ['None', 'Warm', 'Cool', 'Rose', 'Vivid'];
+// ── Filters ────────────────────────────────────────
+const FILTERS = [
+  { name: 'No Filter',     css: 'none',                                        bg: '#888' },
+  { name: 'Sun-Kissed',    css: 'sepia(0.35) saturate(1.3) brightness(1.08)',  bg: '#c8845a' },
+  { name: 'Cotton Candy',  css: 'hue-rotate(320deg) saturate(1.2) brightness(1.1)', bg: '#e8a0c0' },
+  { name: 'Fresh Face',    css: 'brightness(1.15) contrast(0.92) saturate(0.9)', bg: '#f5c8a0' },
+  { name: 'Pop',           css: 'saturate(1.6) contrast(1.1)',                 bg: '#e86060' },
+  { name: 'Vitality',      css: 'saturate(1.4) brightness(1.05) hue-rotate(5deg)', bg: '#d4785a' },
+  { name: 'Pink',          css: 'hue-rotate(330deg) saturate(1.3) brightness(1.08)', bg: '#e890a8' },
+  { name: 'Ruddy',         css: 'sepia(0.2) saturate(1.5) hue-rotate(350deg)', bg: '#c86858' },
+  { name: 'Lively',        css: 'saturate(1.5) contrast(1.05) brightness(1.05)', bg: '#d89060' },
+  { name: 'Elegant',       css: 'saturate(0.8) contrast(1.1) brightness(1.05)', bg: '#b09898' },
+];
 
-const video = document.getElementById('video');
-const canvasFilter = document.getElementById('canvas-filter');
-const ctx = canvasFilter.getContext('2d');
-
-// ─── Camera ──────────────────────────────────────────────
-async function startCamera() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: isFront ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      audio: true
-    });
-    video.srcObject = stream;
-    document.getElementById('no-camera').style.display = 'none';
-    video.style.display = 'block';
-    applyFilters();
-    toast('Camera ready');
-  } catch(e) {
-    toast('Camera permission denied');
-    console.error(e);
-  }
+function buildFilters() {
+  const strip = document.getElementById('filter-strip');
+  strip.innerHTML = FILTERS.map((f, i) => `
+    <div class="flt ${i===0?'active':''}" onclick="applyFilter(${i})">
+      <div class="flt-swatch" style="background:${f.bg};"></div>
+      <span>${f.name}</span>
+    </div>
+  `).join('');
 }
 
-async function flipCamera() {
-  isFront = !isFront;
-  if (stream) {
-    stream.getTracks().forEach(t => t.stop());
-    await startCamera();
-  }
+function applyFilter(i) {
+  activeFilter = i;
+  document.querySelectorAll('.flt').forEach((el, idx) => el.classList.toggle('active', idx === i));
+  updateVideoFilter();
 }
 
-// ─── Filters (CSS on video) ───────────────────────────────
-function applyFilters() {
-  const brightness = document.getElementById('brightness').value;
-  const contrast = document.getElementById('contrast').value;
-  const saturation = document.getElementById('saturation').value;
-  const warmth = parseInt(document.getElementById('warmth').value);
-  const blur = document.getElementById('blur').value;
-
-  document.getElementById('brightness-val').textContent = brightness;
-  document.getElementById('contrast-val').textContent = contrast;
-  document.getElementById('saturation-val').textContent = saturation;
-  document.getElementById('warmth-val').textContent = warmth;
-  document.getElementById('blur-val').textContent = blur;
-
-  let filterStr = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
-  if (blur > 0) filterStr += ` blur(${blur}px)`;
-
-  // Color filter via hue/sepia trick
-  if (colorFilter === 1) filterStr += ' sepia(0.2) hue-rotate(-10deg)';
-  if (colorFilter === 2) filterStr += ' hue-rotate(180deg) invert(1) hue-rotate(180deg) saturate(0.7) brightness(1.1)';
-  if (colorFilter === 3) filterStr += ' hue-rotate(310deg) saturate(1.2)';
-  if (colorFilter === 4) filterStr += ' saturate(1.5) contrast(1.1)';
-
-  // Smooth = soften skin via slight blur + brightness
-  if (filtersEnabled.smooth) filterStr += ' blur(0.8px) brightness(1.05)';
-  if (filtersEnabled.bright) filterStr += ' brightness(1.1) contrast(0.95)';
-
-  video.style.filter = filterStr;
-  document.getElementById('smooth-btn').classList.toggle('active', filtersEnabled.smooth);
-  document.getElementById('bright-btn').classList.toggle('active', filtersEnabled.bright);
-}
-
-function toggleFilterPanel() {
-  filterPopupOpen = !filterPopupOpen;
-  document.getElementById('filter-popup').classList.toggle('open', filterPopupOpen);
-  document.getElementById('filter-toggle-btn').classList.toggle('active', filterPopupOpen);
+function updateVideoFilter() {
+  const f = FILTERS[activeFilter];
+  let css = f.css === 'none' ? '' : f.css;
+  if (smoothOn) css += ' blur(0.7px) brightness(1.04)';
+  document.getElementById('video').style.filter = css || 'none';
 }
 
 function toggleSmooth() {
-  filtersEnabled.smooth = !filtersEnabled.smooth;
-  applyFilters();
-  toast(filtersEnabled.smooth ? 'Skin smooth on' : 'Skin smooth off');
+  smoothOn = !smoothOn;
+  document.getElementById('btn-smooth').classList.toggle('on', smoothOn);
+  updateVideoFilter();
+  toast(smoothOn ? 'Smooth skin on' : 'Smooth skin off');
 }
 
-function toggleBright() {
-  filtersEnabled.bright = !filtersEnabled.bright;
-  applyFilters();
-  toast(filtersEnabled.bright ? 'Glow on' : 'Glow off');
-}
-
-function cycleColorFilter() {
-  colorFilter = (colorFilter + 1) % colorFilters.length;
-  document.getElementById('filter-color-btn').classList.toggle('active', colorFilter > 0);
-  applyFilters();
-  toast('Filter: ' + colorFilterNames[colorFilter]);
-}
-
-// ─── Recording ───────────────────────────────────────────
-async function toggleRecord() {
-  if (!stream) { await startCamera(); return; }
-  isRecording ? stopRecord() : startRecord();
-}
-
-function startRecord() {
-  recordedChunks = [];
-  const options = { mimeType: 'video/webm;codecs=vp9,opus' };
-  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    options.mimeType = 'video/webm';
+// ── Camera ─────────────────────────────────────────
+async function startCam() {
+  try {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: isFront ? 'user' : 'environment', width:{ideal:1280}, height:{ideal:720} },
+      audio: true
+    });
+    const vid = document.getElementById('video');
+    vid.srcObject = stream;
+    vid.style.transform = isFront ? 'scaleX(-1)' : 'scaleX(1)';
+    document.getElementById('no-cam').style.display = 'none';
+  } catch(e) {
+    toast('Camera permission denied');
   }
-
-  mediaRecorder = new MediaRecorder(stream, options);
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-  mediaRecorder.onstop = saveRecording;
-  mediaRecorder.start(100);
-
-  isRecording = true;
-  recSeconds = 0;
-  document.getElementById('rec-btn').classList.add('recording');
-  document.getElementById('rec-indicator').classList.add('visible');
-
-  recTimerInterval = setInterval(() => {
-    recSeconds++;
-    const m = Math.floor(recSeconds / 60);
-    const s = recSeconds % 60;
-    document.getElementById('rec-timer').textContent = m + ':' + String(s).padStart(2, '0');
-  }, 1000);
-
-  toast('Recording started');
 }
 
-function stopRecord() {
-  if (!mediaRecorder) return;
-  mediaRecorder.stop();
-  isRecording = false;
+async function flipCam() {
+  isFront = !isFront;
+  await startCam();
+}
+
+// ── Recording ──────────────────────────────────────
+function toggleRec() {
+  if (!stream) { startCam(); return; }
+  isRec ? stopRec() : startRec();
+}
+
+function startRec() {
+  recChunks = [];
+  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+    ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+  mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
+  mediaRecorder.onstop = finishRec;
+  mediaRecorder.start(100);
+  isRec = true;
+  recSec = 0;
+  document.getElementById('rec-btn').classList.add('recording');
+  document.getElementById('rec-pill').classList.add('on');
+  recTimer = setInterval(() => {
+    recSec++;
+    const m = Math.floor(recSec/60), s = recSec%60;
+    document.getElementById('rec-timer').textContent = m+':'+(s<10?'0':'')+s;
+  }, 1000);
+}
+
+function stopRec() {
+  mediaRecorder && mediaRecorder.stop();
+  isRec = false;
+  clearInterval(recTimer);
   document.getElementById('rec-btn').classList.remove('recording');
-  document.getElementById('rec-indicator').classList.remove('visible');
-  clearInterval(recTimerInterval);
+  document.getElementById('rec-pill').classList.remove('on');
+}
+
+function finishRec() {
+  const blob = new Blob(recChunks, { type: 'video/webm' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  recordings.unshift({
+    url, dur: recSec,
+    name: 'Take ' + (recordings.length+1),
+    date: now.toLocaleDateString()
+  });
+  renderSaved();
   toast('Recording saved!');
 }
 
-function saveRecording() {
-  const blob = new Blob(recordedChunks, { type: 'video/webm' });
-  const url = URL.createObjectURL(blob);
-  const now = new Date();
-  const name = 'Take ' + (recordings.length + 1) + ' — ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  const dur = recSeconds;
-  recordings.unshift({ url, name, dur, date: now.toLocaleDateString() });
-  renderRecordings();
-}
-
-// ─── Teleprompter ─────────────────────────────────────────
-function toggleTeleprompter() {
-  teleprompterActive = !teleprompterActive;
-  const wrap = document.getElementById('teleprompter-wrap');
-  const btn = document.getElementById('tp-btn');
-  wrap.classList.toggle('visible', teleprompterActive);
-  btn.classList.toggle('active', teleprompterActive);
-
-  if (teleprompterActive) {
-    setupTeleprompter();
-    startTeleprompterScroll();
+// ── Teleprompter ───────────────────────────────────
+function togglePrompter() {
+  prompterOn = !prompterOn;
+  document.getElementById('btn-prompter').classList.toggle('on', prompterOn);
+  const zone = document.getElementById('prompter-zone');
+  zone.classList.toggle('on', prompterOn);
+  if (prompterOn) {
+    loadPrompt();
+    startScroll();
   } else {
-    stopTeleprompterScroll();
+    stopScroll();
   }
 }
 
-function setupTeleprompter() {
-  const text = document.getElementById('script-textarea').value || scriptText;
-  const tp = document.getElementById('tp-text');
-  tp.textContent = text || 'No script set. Go to Edit tab to add your script.';
-  tpOffset = 0;
-  tp.style.transform = 'translateY(0px)';
+function loadPrompt() {
+  const el = document.getElementById('prompter-text');
+  el.textContent = scriptText || 'No script yet. Go to Script tab to add one.';
+  prompterOffset = 0;
+  el.style.transform = 'translateY(0)';
 }
 
-function startTeleprompterScroll() {
-  stopTeleprompterScroll();
-  const tp = document.getElementById('tp-text');
-  const container = document.getElementById('tp-scroll-container');
-
-  tpScrollInterval = setInterval(() => {
-    const spd = parseInt(document.getElementById('tp-speed').value) / 1000;
-    tpOffset -= spd;
-    const maxScroll = -(tp.scrollHeight - container.offsetHeight + 60);
-    if (tpOffset < maxScroll) {
-      tpOffset = 0;
-    }
-    tp.style.transform = `translateY(${tpOffset}px)`;
+function startScroll() {
+  stopScroll();
+  const el = document.getElementById('prompter-text');
+  const zone = document.getElementById('prompter-zone');
+  prompterInterval = setInterval(() => {
+    const spd = parseInt(document.getElementById('speed-slider').value) / 800;
+    prompterOffset -= spd;
+    const max = -(el.scrollHeight + 40);
+    if (prompterOffset < max) prompterOffset = zone.clientHeight;
+    el.style.transform = `translateY(${prompterOffset}px)`;
   }, 16);
 }
 
-function stopTeleprompterScroll() {
-  if (tpScrollInterval) clearInterval(tpScrollInterval);
+function stopScroll() {
+  clearInterval(prompterInterval);
 }
 
-// ─── Script panel ─────────────────────────────────────────
-function openScriptPanel() {
-  document.getElementById('script-textarea').value = scriptText;
-  document.getElementById('tp-speed').value = tpSpeed;
-  document.getElementById('tp-speed-val').textContent = tpSpeed;
-  document.getElementById('tp-speed').oninput = function() {
-    tpSpeed = parseInt(this.value);
-    document.getElementById('tp-speed-val').textContent = tpSpeed;
-    localStorage.setItem('tb_speed', tpSpeed);
-  };
-  document.getElementById('script-panel').classList.add('open');
+function onSpeedChange(val) {
+  speed = parseInt(val);
 }
 
-function closeScriptPanel() {
-  document.getElementById('script-panel').classList.remove('open');
-}
-
+// ── Script ─────────────────────────────────────────
 function saveScript() {
-  scriptText = document.getElementById('script-textarea').value;
-  tpSpeed = parseInt(document.getElementById('tp-speed').value);
+  scriptText = document.getElementById('script-ta').value;
   localStorage.setItem('tb_script', scriptText);
-  localStorage.setItem('tb_speed', tpSpeed);
-  closeScriptPanel();
+  closePanel('script');
   toast('Script saved!');
-  if (teleprompterActive) {
-    setupTeleprompter();
-    startTeleprompterScroll();
-  }
+  if (prompterOn) { loadPrompt(); startScroll(); }
 }
 
-// ─── Recordings panel ────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'recordings') openRecordingsPanel();
-  if (tab === 'script') { openScriptPanel(); document.getElementById('tab-camera').classList.add('active'); }
-  if (tab === 'camera') { closeRecordingsPanel(); closeScriptPanel(); }
-}
-
-function openRecordingsPanel() {
-  renderRecordings();
-  document.getElementById('recordings-panel').classList.add('open');
-}
-
-function closeRecordingsPanel() {
-  document.getElementById('recordings-panel').classList.remove('open');
-  document.getElementById('tab-camera').classList.add('active');
-  document.getElementById('tab-recordings').classList.remove('active');
-}
-
-function renderRecordings() {
-  const list = document.getElementById('recordings-list');
-  if (recordings.length === 0) {
-    list.innerHTML = `<div class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
-        <circle cx="12" cy="12" r="10"/>
-        <polygon points="10,8 16,12 10,16"/>
-      </svg>
-      <p>No recordings yet.<br>Hit the red button to start recording!</p>
+// ── Saved recordings ───────────────────────────────
+function renderSaved() {
+  const list = document.getElementById('saved-list');
+  if (!recordings.length) {
+    list.innerHTML = `<div class="empty">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><polygon points="5,3 19,12 5,21"/></svg>
+      <p>No recordings yet.<br>Hit the red button to start!</p>
     </div>`;
     return;
   }
-
-  list.innerHTML = recordings.map((r, i) => `
-    <div class="rec-item">
-      <div class="rec-thumb">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5,3 19,12 5,21"/>
-        </svg>
+  list.innerHTML = recordings.map((r,i) => `
+    <div class="saved-item">
+      <div class="saved-ic">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
       </div>
-      <div class="rec-info">
-        <div class="rec-name">${r.name}</div>
-        <div class="rec-meta">${r.date} &middot; ${formatDur(r.dur)}</div>
+      <div class="saved-info">
+        <div class="saved-name">${r.name}</div>
+        <div class="saved-meta">${r.date} · ${Math.floor(r.dur/60)}:${(r.dur%60<10?'0':'')+r.dur%60}</div>
       </div>
-      <div class="rec-actions">
-        <div class="rec-action-btn play" onclick="playRecording(${i})" title="Play">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polygon points="5,3 19,12 5,21"/>
-          </svg>
+      <div class="saved-actions">
+        <div class="sav-btn" onclick="playRec(${i})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
         </div>
-        <div class="rec-action-btn dl" onclick="downloadRecording(${i})" title="Download">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-          </svg>
+        <div class="sav-btn" onclick="dlRec(${i})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-function formatDur(s) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m + ':' + String(sec).padStart(2, '0');
+function playRec(i) {
+  const w = window.open('','_blank');
+  w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><video src="${recordings[i].url}" controls autoplay style="max-width:100%;max-height:100%"></video></body></html>`);
 }
 
-function playRecording(i) {
-  const rec = recordings[i];
-  const win = window.open('', '_blank');
-  win.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh">
-    <video src="${rec.url}" controls autoplay style="max-width:100%;max-height:100vh"></video>
-  </body></html>`);
-}
-
-function downloadRecording(i) {
-  const rec = recordings[i];
+function dlRec(i) {
   const a = document.createElement('a');
-  a.href = rec.url;
-  a.download = rec.name.replace(/[^a-z0-9]/gi, '_') + '.webm';
+  a.href = recordings[i].url;
+  a.download = recordings[i].name.replace(/\s/g,'_') + '.webm';
   a.click();
   toast('Downloading...');
 }
 
-// ─── Install PWA ──────────────────────────────────────────
-let deferredInstall = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredInstall = e;
-  document.getElementById('install-banner').classList.add('visible');
-});
-
-function installApp() {
-  if (deferredInstall) {
-    deferredInstall.prompt();
-    deferredInstall.userChoice.then(r => {
-      if (r.outcome === 'accepted') {
-        dismissInstall();
-        toast('TeleBeauty installed!');
-      }
-      deferredInstall = null;
-    });
-  } else {
-    toast('On iOS: tap Share → Add to Home Screen');
+// ── Tabs / Panels ──────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  if (tab === 'script') {
+    document.getElementById('script-ta').value = scriptText;
+    document.getElementById('script-panel').classList.add('open');
+  }
+  if (tab === 'saved') {
+    renderSaved();
+    document.getElementById('saved-panel').classList.add('open');
+  }
+  if (tab === 'cam') {
+    document.getElementById('script-panel').classList.remove('open');
+    document.getElementById('saved-panel').classList.remove('open');
   }
 }
 
-function dismissInstall() {
-  document.getElementById('install-banner').classList.remove('visible');
+function closePanel(name) {
+  document.getElementById(name+'-panel').classList.remove('open');
+  document.getElementById('tab-cam').classList.add('on');
+  document.getElementById('tab-'+name).classList.remove('on');
 }
 
-// ─── Toast ────────────────────────────────────────────────
+// ── Toast ──────────────────────────────────────────
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2200);
+  setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-// ─── Close filter popup on outside click ─────────────────
-document.addEventListener('click', e => {
-  if (filterPopupOpen) {
-    const popup = document.getElementById('filter-popup');
-    const btn = document.getElementById('filter-toggle-btn');
-    const panel = document.getElementById('beauty-panel');
-    if (!popup.contains(e.target) && !panel.contains(e.target)) {
-      filterPopupOpen = false;
-      popup.classList.remove('open');
-      btn.classList.remove('active');
-    }
-  }
-});
+// ── Init ───────────────────────────────────────────
+buildFilters();
+startCam();
 
-// ─── Service Worker ───────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
-
-// ─── Init ─────────────────────────────────────────────────
-startCamera();
 </script>
 </body>
 </html>
