@@ -658,6 +658,7 @@
       <div id="tp-text"></div>
     </div>
     <div id="tp-mask-bottom"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 16px 2px;pointer-events:all;"><span style="font-size:11px;color:rgba(255,255,255,0.55);white-space:nowrap;">Speed</span><input type="range" id="tp-speed-live" min="10" max="120" value="40" style="flex:1;height:3px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.2);border-radius:2px;outline:none;cursor:pointer;" oninput="tpSpeed=parseInt(this.value);document.getElementById('tp-speed').value=this.value;document.getElementById('tp-speed-val').textContent=this.value;localStorage.setItem('tb_speed',this.value);"><span style="font-size:11px;color:rgba(255,255,255,0.55);min-width:22px;text-align:right;" id="tp-speed-live-val">40</span></div>
   </div>
 
   <!-- Bottom controls -->
@@ -985,8 +986,9 @@ function openScriptPanel() {
   document.getElementById('tp-speed').value = tpSpeed;
   document.getElementById('tp-speed-val').textContent = tpSpeed;
   document.getElementById('tp-speed').oninput = function() {
-    tpSpeed = this.value;
+    tpSpeed = parseInt(this.value);
     document.getElementById('tp-speed-val').textContent = tpSpeed;
+    localStorage.setItem('tb_speed', tpSpeed);
   };
   document.getElementById('script-panel').classList.add('open');
 }
