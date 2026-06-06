@@ -6,336 +6,101 @@
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="TeleBeauty">
 <title>TeleBeauty</title>
 <link rel="manifest" href="manifest.json">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,sans-serif;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{width:100vw;height:100dvh;position:relative;overflow:hidden;background:#000}
 
-:root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
+/* VIDEO */
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
 
-html, body {
-  width: 100%; height: 100%;
-  background: #000;
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
+/* ENABLE CAMERA BUTTON - shown first, hidden after camera starts */
+#cam-btn-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20;background:#000}
+#cam-btn-wrap p{color:rgba(255,255,255,0.5);font-size:14px}
+#cam-btn-wrap button{background:#fff;color:#000;border:none;border-radius:14px;padding:14px 36px;font-size:16px;font-weight:700;cursor:pointer}
 
-#app {
-  width: 100vw; height: 100dvh;
-  position: relative; overflow: hidden;
-  background: #000;
-}
+/* PROMPTER */
+#prompter{position:absolute;top:0;left:0;right:0;height:36%;z-index:10;background:linear-gradient(to bottom,rgba(0,0,0,0.8) 65%,transparent);display:none;overflow:hidden;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px 0}
+#prompter.on{display:block}
+#ptext{font-size:26px;font-weight:700;color:#fff;text-align:center;line-height:1.55;position:absolute;width:calc(100% - 32px)}
+#pspeed{position:absolute;bottom:8px;left:16px;right:16px;display:flex;align-items:center;gap:10px}
+#pspeed span{font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap}
+#pspeed input{flex:1;height:3px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,0.2);border-radius:2px;outline:none;cursor:pointer}
+#pspeed input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;cursor:pointer}
 
-/* ── CAMERA ── */
-#video {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-}
+/* REC PILL */
+#recpill{position:absolute;top:calc(env(safe-area-inset-top,0px)+12px);left:50%;transform:translateX(-50%);background:rgba(220,38,38,0.92);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;color:#fff;display:none;align-items:center;gap:7px;z-index:15;white-space:nowrap}
+#recpill.on{display:flex}
+#recdot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
-/* ── TELEPROMPTER ── */
-#prompter-zone {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 38%;
-  z-index: 10;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.72) 70%, transparent 100%);
-  display: none;
-  flex-direction: column;
-  justify-content: flex-start;
-  overflow: hidden;
-  padding-top: calc(var(--safe-top) + 10px);
-}
-#prompter-zone.on { display: flex; }
+/* FLIP */
+#flipbtn{position:absolute;top:calc(env(safe-area-inset-top,0px)+12px);right:14px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:15;color:#fff}
+#flipbtn:active{transform:scale(0.9)}
 
-#prompter-text {
-  font-size: 26px;
-  font-weight: 700;
-  color: #fff;
-  text-align: center;
-  line-height: 1.55;
-  padding: 0 20px;
-  position: absolute;
-  width: 100%;
-  top: calc(var(--safe-top) + 10px);
-}
+/* BOTTOM */
+#bottom{position:absolute;bottom:0;left:0;right:0;z-index:10;background:linear-gradient(to top,rgba(0,0,0,0.9) 70%,transparent)}
 
-/* speed bar inside prompter */
-#speed-bar {
-  position: absolute;
-  bottom: 8px; left: 20px; right: 20px;
-  display: flex; align-items: center; gap: 10px;
-  pointer-events: all;
-}
-#speed-bar span { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; }
-#speed-slider {
-  flex: 1; height: 3px;
-  -webkit-appearance: none; appearance: none;
-  background: rgba(255,255,255,0.25);
-  border-radius: 2px; outline: none; cursor: pointer;
-}
-#speed-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #fff; cursor: pointer;
-  box-shadow: 0 0 4px rgba(0,0,0,0.4);
-}
+/* FILTER STRIP */
+#fstrip{display:flex;overflow-x:auto;gap:12px;padding:12px 16px 6px;scrollbar-width:none}
+#fstrip::-webkit-scrollbar{display:none}
+.fc{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.fs{width:52px;height:52px;border-radius:16px;border:3px solid transparent;transition:border-color 0.2s}
+.fc.on .fs{border-color:#fff}
+.fc span{font-size:10px;color:rgba(255,255,255,0.6);text-align:center}
+.fc.on span{color:#fff;font-weight:600}
 
-/* ── BOTTOM PANEL ── */
-#bottom {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  z-index: 10;
-  padding: 0 0 calc(var(--safe-bottom) + 16px);
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 60%, transparent 100%);
-}
+/* CTRL ROW */
+#ctrlrow{display:flex;align-items:center;justify-content:space-around;padding:10px 20px 8px}
+.cbtn{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.cbtn .ci{width:52px;height:52px;border-radius:18px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.cbtn.on .ci{background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.4)}
+.cbtn:active .ci{transform:scale(0.9)}
+.cbtn span{font-size:10px;color:rgba(255,255,255,0.55)}
+.cbtn.on span{color:#fff}
 
-/* Filter strip */
-#filter-strip {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 10px 16px 6px;
-  scrollbar-width: none;
-}
-#filter-strip::-webkit-scrollbar { display: none; }
+/* REC BUTTON */
+#recbtn{width:74px;height:74px;border-radius:50%;background:rgba(255,255,255,0.12);border:3px solid rgba(255,255,255,0.35);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;position:relative}
+#recbtn::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.12)}
+#recinner{width:50px;height:50px;border-radius:50%;background:#ef4444;transition:all 0.25s;box-shadow:0 0 18px rgba(239,68,68,0.5)}
+#recbtn.on #recinner{border-radius:10px;width:30px;height:30px}
+#recbtn:active{transform:scale(0.93)}
 
-.flt {
-  flex-shrink: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  cursor: pointer;
-}
-.flt-swatch {
-  width: 48px; height: 48px;
-  border-radius: 14px;
-  border: 2.5px solid transparent;
-  transition: border-color 0.2s;
-}
-.flt.active .flt-swatch { border-color: #fff; }
-.flt span { font-size: 10px; color: rgba(255,255,255,0.7); letter-spacing: 0.2px; }
-.flt.active span { color: #fff; font-weight: 600; }
+/* TABBAR */
+#tabbar{display:flex;border-top:1px solid rgba(255,255,255,0.07);background:rgba(10,10,10,0.95)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 calc(env(safe-area-inset-bottom,0px)+8px);cursor:pointer;color:rgba(255,255,255,0.3);font-size:10px;transition:color 0.2s}
+.tab svg{width:22px;height:22px}
+.tab.on{color:#fff}
 
-/* Controls row */
-#ctrl-row {
-  display: flex; align-items: center; justify-content: space-around;
-  padding: 10px 24px 6px;
-}
+/* PANELS */
+.panel{position:absolute;inset:0;background:#0a0a0a;z-index:50;display:none;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.panel.open{display:flex}
+.phdr{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.phdr h3{flex:1;font-size:17px;font-weight:600;color:#fff}
+.xbtn{width:34px;height:34px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.6)}
+.pbody{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px 20px;overflow:hidden}
+#scripta{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;color:#fff;font-size:15px;line-height:1.7;padding:14px;resize:none;outline:none;font-family:inherit}
+#scripta:focus{border-color:rgba(255,255,255,0.25)}
+#scripta::placeholder{color:rgba(255,255,255,0.2)}
+.savebtn{background:#fff;color:#000;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer}
 
-.ctrl-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 5px;
-  cursor: pointer;
-}
-.ctrl-btn .ic {
-  width: 50px; height: 50px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.18);
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s;
-}
-.ctrl-btn .ic svg { width: 22px; height: 22px; color: #fff; }
-.ctrl-btn span { font-size: 10px; color: rgba(255,255,255,0.6); }
-.ctrl-btn.on .ic { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.5); }
-.ctrl-btn:active .ic { transform: scale(0.9); }
+/* SAVED LIST */
+#savedlist{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.si{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.sic{width:50px;height:50px;border-radius:12px;background:rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);flex-shrink:0}
+.sinfo{flex:1;min-width:0}
+.sname{font-size:14px;font-weight:500;color:#fff}
+.smeta{font-size:12px;color:rgba(255,255,255,0.35);margin-top:2px}
+.sacts{display:flex;gap:8px}
+.sab{width:36px;height:36px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.5)}
+.sab:active{transform:scale(0.9)}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,0.2);padding:40px;text-align:center;font-size:14px;line-height:1.6}
 
-/* Record button */
-#rec-btn {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: rgba(255,255,255,0.15);
-  border: 3px solid rgba(255,255,255,0.4);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.2s;
-  position: relative;
-}
-#rec-btn::after {
-  content: '';
-  position: absolute; inset: -7px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,0.15);
-}
-#rec-inner {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: #ef4444;
-  transition: all 0.25s;
-  box-shadow: 0 0 16px rgba(239,68,68,0.5);
-}
-#rec-btn.recording #rec-inner {
-  border-radius: 10px;
-  width: 30px; height: 30px;
-}
-#rec-btn:active { transform: scale(0.94); }
-
-/* Rec timer pill */
-#rec-pill {
-  position: absolute;
-  top: calc(var(--safe-top) + 14px);
-  left: 50%; transform: translateX(-50%);
-  background: rgba(239,68,68,0.9);
-  border-radius: 20px; padding: 5px 14px;
-  font-size: 13px; font-weight: 700; color: #fff;
-  display: none; align-items: center; gap: 7px;
-  z-index: 15; white-space: nowrap;
-}
-#rec-pill.on { display: flex; }
-#rec-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: blink 1s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
-/* Flip button */
-#flip-btn {
-  position: absolute;
-  top: calc(var(--safe-top) + 14px); right: 16px;
-  width: 40px; height: 40px; border-radius: 50%;
-  background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.2);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; z-index: 15;
-  color: #fff;
-}
-#flip-btn svg { width: 18px; height: 18px; }
-#flip-btn:active { transform: scale(0.9); }
-
-/* No camera state */
-#no-cam {
-  position: absolute; inset: 0;
-  display: none; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 14px; color: rgba(255,255,255,0.6);
-  text-align: center; padding: 40px;
-  z-index: 5;
-}
-#no-cam p { font-size: 14px; line-height: 1.6; }
-#no-cam button {
-  background: #fff; color: #000;
-  border: none; border-radius: 12px;
-  padding: 13px 30px; font-size: 15px; font-weight: 600;
-  cursor: pointer; margin-top: 6px;
-}
-
-/* Script panel */
-#script-panel {
-  position: absolute; inset: 0;
-  background: #0a0a0a;
-  z-index: 50; display: none;
-  flex-direction: column;
-  padding-top: var(--safe-top);
-}
-#script-panel.open { display: flex; }
-
-.panel-hdr {
-  display: flex; align-items: center; gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.panel-hdr h3 { flex: 1; font-size: 17px; font-weight: 600; color: #fff; }
-.back-btn {
-  width: 34px; height: 34px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: rgba(255,255,255,0.7);
-}
-
-.panel-body { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; overflow: hidden; }
-
-#script-ta {
-  flex: 1; background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px; color: #fff;
-  font-size: 15px; line-height: 1.7;
-  padding: 14px; resize: none; outline: none;
-  font-family: inherit;
-}
-#script-ta:focus { border-color: rgba(255,255,255,0.3); }
-#script-ta::placeholder { color: rgba(255,255,255,0.25); }
-
-.save-btn {
-  background: #fff; color: #000;
-  border: none; border-radius: 14px;
-  padding: 15px; font-size: 15px; font-weight: 700;
-  cursor: pointer; letter-spacing: 0.3px;
-}
-
-/* Saved panel */
-#saved-panel {
-  position: absolute; inset: 0;
-  background: #0a0a0a;
-  z-index: 50; display: none;
-  flex-direction: column;
-  padding-top: var(--safe-top);
-}
-#saved-panel.open { display: flex; }
-#saved-list { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
-
-.saved-item {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px; padding: 14px 16px;
-  display: flex; align-items: center; gap: 14px;
-}
-.saved-ic {
-  width: 50px; height: 50px; border-radius: 12px;
-  background: rgba(255,255,255,0.08);
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.5); flex-shrink: 0;
-}
-.saved-info { flex: 1; min-width: 0; }
-.saved-name { font-size: 14px; font-weight: 500; color: #fff; }
-.saved-meta { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 3px; }
-.saved-actions { display: flex; gap: 8px; }
-.sav-btn {
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.6); transition: all 0.2s;
-}
-.sav-btn:active { transform: scale(0.9); }
-
-.empty {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 10px;
-  color: rgba(255,255,255,0.25); padding: 40px; text-align: center;
-}
-.empty p { font-size: 14px; line-height: 1.6; }
-
-/* Tab bar */
-#tabbar {
-  display: flex;
-  background: rgba(15,15,15,0.9);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  padding-bottom: calc(var(--safe-bottom) + 4px);
-}
-.tab {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; padding: 10px 0;
-  cursor: pointer; color: rgba(255,255,255,0.35);
-  transition: color 0.2s; font-size: 10px;
-}
-.tab svg { width: 22px; height: 22px; }
-.tab.on { color: #fff; }
-
-/* Toast */
-#toast {
-  position: fixed; bottom: 110px; left: 50%;
-  transform: translateX(-50%) translateY(8px);
-  background: rgba(30,30,30,0.95);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 10px; padding: 9px 18px;
-  font-size: 13px; color: #fff;
-  z-index: 100; opacity: 0;
-  transition: all 0.25s; white-space: nowrap;
-  pointer-events: none;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* TOAST */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(8px);background:rgba(25,25,25,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 18px;font-size:13px;color:#fff;z-index:200;opacity:0;transition:all 0.25s;white-space:nowrap;pointer-events:none}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -343,394 +108,277 @@ html, body {
 
   <video id="video" autoplay muted playsinline></video>
 
-  <div id="no-cam">
-    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
-      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-      <circle cx="12" cy="13" r="4"/>
-    </svg>
-    <p>Camera access needed</p>
+  <!-- shown until camera starts -->
+  <div id="cam-btn-wrap">
+    <p>Tap to enable camera</p>
     <button onclick="startCam()">Enable Camera</button>
   </div>
 
-  <!-- Teleprompter zone -->
-  <div id="prompter-zone">
-    <div id="prompter-text"></div>
-    <div id="speed-bar">
+  <!-- Teleprompter -->
+  <div id="prompter">
+    <div id="ptext"></div>
+    <div id="pspeed">
       <span>Slow</span>
-      <input type="range" id="speed-slider" min="5" max="150" value="40"
-        oninput="onSpeedChange(this.value)">
+      <input type="range" id="speedslider" min="5" max="150" value="40">
       <span>Fast</span>
     </div>
   </div>
 
-  <!-- Recording pill -->
-  <div id="rec-pill">
-    <div id="rec-dot"></div>
-    <span id="rec-timer">0:00</span>
-  </div>
+  <!-- Rec pill -->
+  <div id="recpill"><div id="recdot"></div><span id="rectimer">0:00</span></div>
 
   <!-- Flip -->
-  <div id="flip-btn" onclick="flipCam()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div id="flipbtn" onclick="flipCam()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M1 4v6h6M23 20v-6h-6"/>
       <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
     </svg>
   </div>
 
-  <!-- Bottom panel -->
+  <!-- Bottom -->
   <div id="bottom">
-    <!-- Filter strip -->
-    <div id="filter-strip"></div>
-
-    <!-- Controls -->
-    <div id="ctrl-row">
-      <div class="ctrl-btn" id="btn-prompter" onclick="togglePrompter()">
-        <div class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <path d="M8 21h8M12 17v4M7 8h10M7 12h6"/>
+    <div id="fstrip"></div>
+    <div id="ctrlrow">
+      <div class="cbtn" id="btnp" onclick="togglePrompter()">
+        <div class="ci">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M7 8h10M7 12h6"/>
           </svg>
         </div>
         <span>Prompter</span>
       </div>
-
-      <div id="rec-btn" onclick="toggleRec()">
-        <div id="rec-inner"></div>
-      </div>
-
-      <div class="ctrl-btn" id="btn-smooth" onclick="toggleSmooth()">
-        <div class="ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
+      <div id="recbtn" onclick="toggleRec()"><div id="recinner"></div></div>
+      <div class="cbtn" id="btnsmooth" onclick="toggleSmooth()">
+        <div class="ci">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
           </svg>
         </div>
         <span>Smooth</span>
       </div>
     </div>
-
-    <!-- Tab bar -->
     <div id="tabbar">
-      <div class="tab on" id="tab-cam" onclick="showTab('cam')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
+      <div class="tab on" id="tcam" onclick="goTab('cam')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
         Camera
       </div>
-      <div class="tab" id="tab-saved" onclick="showTab('saved')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5,3 19,12 5,21"/>
-        </svg>
+      <div class="tab" id="tsaved" onclick="goTab('saved')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
         Saved
       </div>
-      <div class="tab" id="tab-script" onclick="showTab('script')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-          <polyline points="14,2 14,8 20,8"/>
-          <line x1="8" y1="13" x2="16" y2="13"/>
-          <line x1="8" y1="17" x2="13" y2="17"/>
-        </svg>
+      <div class="tab" id="tscript" onclick="goTab('script')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
         Script
       </div>
     </div>
   </div>
 
   <!-- Script panel -->
-  <div id="script-panel">
-    <div class="panel-hdr">
-      <div class="back-btn" onclick="closePanel('script')">
+  <div class="panel" id="scriptpanel">
+    <div class="phdr">
+      <div class="xbtn" onclick="closePanel('script')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </div>
       <h3>Script Editor</h3>
     </div>
-    <div class="panel-body">
-      <textarea id="script-ta" placeholder="Type or paste your script here...
-
-TeleBeauty will scroll this text on screen while you record."></textarea>
-      <button class="save-btn" onclick="saveScript()">Save & Use Script</button>
+    <div class="pbody">
+      <textarea id="scripta" placeholder="Type your script here...&#10;&#10;TeleBeauty will scroll this on screen while you record."></textarea>
+      <button class="savebtn" onclick="saveScript()">Save & Use Script</button>
     </div>
   </div>
 
   <!-- Saved panel -->
-  <div id="saved-panel">
-    <div class="panel-hdr">
-      <div class="back-btn" onclick="closePanel('saved')">
+  <div class="panel" id="savedpanel">
+    <div class="phdr">
+      <div class="xbtn" onclick="closePanel('saved')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </div>
       <h3>Saved Recordings</h3>
     </div>
-    <div id="saved-list"></div>
+    <div id="savedlist"></div>
   </div>
 
   <div id="toast"></div>
 </div>
-
 <script>
-// ── State ──────────────────────────────────────────
-let stream = null;
-let isFront = true;
-let mediaRecorder = null;
-let recChunks = [];
-let recordings = [];
-let isRec = false;
-let recSec = 0;
-let recTimer = null;
-let prompterOn = false;
-let prompterInterval = null;
-let prompterOffset = 0;
-let scriptText = localStorage.getItem('tb_script') || '';
-let smoothOn = false;
-let activeFilter = 0;
-let speed = 40;
+var stream=null,isFront=true,recorder=null,chunks=[],recs=[],isRec=false,recSec=0,recInt=null;
+var promptOn=false,promptInt=null,pOffset=0;
+var smoothOn=false,activeF=0;
+var scriptText=localStorage.getItem('tb_script')||'';
 
-// ── Filters ────────────────────────────────────────
-const FILTERS = [
-  { name: 'No Filter',     css: 'none',                                        bg: '#888' },
-  { name: 'Sun-Kissed',    css: 'sepia(0.35) saturate(1.3) brightness(1.08)',  bg: '#c8845a' },
-  { name: 'Cotton Candy',  css: 'hue-rotate(320deg) saturate(1.2) brightness(1.1)', bg: '#e8a0c0' },
-  { name: 'Fresh Face',    css: 'brightness(1.15) contrast(0.92) saturate(0.9)', bg: '#f5c8a0' },
-  { name: 'Pop',           css: 'saturate(1.6) contrast(1.1)',                 bg: '#e86060' },
-  { name: 'Vitality',      css: 'saturate(1.4) brightness(1.05) hue-rotate(5deg)', bg: '#d4785a' },
-  { name: 'Pink',          css: 'hue-rotate(330deg) saturate(1.3) brightness(1.08)', bg: '#e890a8' },
-  { name: 'Ruddy',         css: 'sepia(0.2) saturate(1.5) hue-rotate(350deg)', bg: '#c86858' },
-  { name: 'Lively',        css: 'saturate(1.5) contrast(1.05) brightness(1.05)', bg: '#d89060' },
-  { name: 'Elegant',       css: 'saturate(0.8) contrast(1.1) brightness(1.05)', bg: '#b09898' },
+var FILTERS=[
+  {name:'No Filter',   css:'',                                              bg:'#6b6b6b'},
+  {name:'Sun-Kissed',  css:'sepia(0.35) saturate(1.3) brightness(1.08)',   bg:'#c8845a'},
+  {name:'Cotton Candy',css:'hue-rotate(320deg) saturate(1.2) brightness(1.1)',bg:'#e8a0c0'},
+  {name:'Fresh Face',  css:'brightness(1.15) contrast(0.92) saturate(0.9)',bg:'#f5c8a0'},
+  {name:'Pop',         css:'saturate(1.6) contrast(1.1)',                  bg:'#e86060'},
+  {name:'Vitality',    css:'saturate(1.4) brightness(1.05)',               bg:'#d4785a'},
+  {name:'Pink',        css:'hue-rotate(330deg) saturate(1.3) brightness(1.08)',bg:'#e890a8'},
+  {name:'Ruddy',       css:'sepia(0.2) saturate(1.5) hue-rotate(350deg)', bg:'#c86858'},
+  {name:'Lively',      css:'saturate(1.5) contrast(1.05) brightness(1.05)',bg:'#d89060'},
+  {name:'Elegant',     css:'saturate(0.8) contrast(1.1) brightness(1.05)',bg:'#b09898'}
 ];
 
-function buildFilters() {
-  const strip = document.getElementById('filter-strip');
-  strip.innerHTML = FILTERS.map((f, i) => `
-    <div class="flt ${i===0?'active':''}" onclick="applyFilter(${i})">
-      <div class="flt-swatch" style="background:${f.bg};"></div>
-      <span>${f.name}</span>
-    </div>
-  `).join('');
+function buildFilters(){
+  var s=document.getElementById('fstrip');
+  s.innerHTML=FILTERS.map(function(f,i){
+    return '<div class="fc'+(i===0?' on':'')+'" onclick="applyFilter('+i+')"><div class="fs" style="background:'+f.bg+'"></div><span>'+f.name+'</span></div>';
+  }).join('');
 }
 
-function applyFilter(i) {
-  activeFilter = i;
-  document.querySelectorAll('.flt').forEach((el, idx) => el.classList.toggle('active', idx === i));
-  updateVideoFilter();
+function applyFilter(i){
+  activeF=i;
+  document.querySelectorAll('.fc').forEach(function(el,idx){el.classList.toggle('on',idx===i);});
+  updateFilter();
 }
 
-function updateVideoFilter() {
-  const f = FILTERS[activeFilter];
-  let css = f.css === 'none' ? '' : f.css;
-  if (smoothOn) css += ' blur(0.7px) brightness(1.04)';
-  document.getElementById('video').style.filter = css || 'none';
+function updateFilter(){
+  var vid=document.getElementById('video');
+  var css=FILTERS[activeF].css;
+  if(smoothOn) css+=(css?' ':'')+'blur(0.7px) brightness(1.04)';
+  vid.style.filter=css||'none';
 }
 
-function toggleSmooth() {
-  smoothOn = !smoothOn;
-  document.getElementById('btn-smooth').classList.toggle('on', smoothOn);
-  updateVideoFilter();
-  toast(smoothOn ? 'Smooth skin on' : 'Smooth skin off');
+function toggleSmooth(){
+  smoothOn=!smoothOn;
+  document.getElementById('btnsmooth').classList.toggle('on',smoothOn);
+  updateFilter();
+  toast(smoothOn?'Smooth on':'Smooth off');
 }
 
-// ── Camera ─────────────────────────────────────────
-async function startCam() {
-  try {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: isFront ? 'user' : 'environment', width:{ideal:1280}, height:{ideal:720} },
-      audio: true
+async function startCam(){
+  try{
+    if(stream) stream.getTracks().forEach(function(t){t.stop();});
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:isFront?'user':'environment',width:{ideal:1280},height:{ideal:720}},
+      audio:true
     });
-    const vid = document.getElementById('video');
-    vid.srcObject = stream;
-    vid.style.transform = isFront ? 'scaleX(-1)' : 'scaleX(1)';
-    document.getElementById('no-cam').style.display = 'none';
-  } catch(e) {
-    document.getElementById('no-cam').style.display = 'flex';
-    toast('Camera permission denied');
+    var vid=document.getElementById('video');
+    vid.srcObject=stream;
+    vid.style.transform=isFront?'scaleX(-1)':'scaleX(1)';
+    document.getElementById('cam-btn-wrap').style.display='none';
+  }catch(e){
+    toast('Camera denied — tap Enable Camera');
+    document.getElementById('cam-btn-wrap').style.display='flex';
   }
 }
 
-async function flipCam() {
-  isFront = !isFront;
-  await startCam();
+async function flipCam(){isFront=!isFront;await startCam();}
+
+function toggleRec(){
+  if(!stream){toast('Enable camera first');return;}
+  isRec?stopRec():startRec();
 }
 
-// ── Recording ──────────────────────────────────────
-function toggleRec() {
-  if (!stream) { startCam(); return; }
-  isRec ? stopRec() : startRec();
-}
-
-function startRec() {
-  recChunks = [];
-  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
-    ? 'video/webm;codecs=vp9,opus' : 'video/webm';
-  mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recChunks.push(e.data); };
-  mediaRecorder.onstop = finishRec;
-  mediaRecorder.start(100);
-  isRec = true;
-  recSec = 0;
-  document.getElementById('rec-btn').classList.add('recording');
-  document.getElementById('rec-pill').classList.add('on');
-  recTimer = setInterval(() => {
+function startRec(){
+  chunks=[];
+  var mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')?'video/webm;codecs=vp9,opus':'video/webm';
+  recorder=new MediaRecorder(stream,{mimeType:mime});
+  recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+  recorder.onstop=finishRec;
+  recorder.start(100);
+  isRec=true; recSec=0;
+  document.getElementById('recbtn').classList.add('on');
+  document.getElementById('recpill').classList.add('on');
+  recInt=setInterval(function(){
     recSec++;
-    const m = Math.floor(recSec/60), s = recSec%60;
-    document.getElementById('rec-timer').textContent = m+':'+(s<10?'0':'')+s;
-  }, 1000);
+    var m=Math.floor(recSec/60),s=recSec%60;
+    document.getElementById('rectimer').textContent=m+':'+(s<10?'0':'')+s;
+  },1000);
 }
 
-function stopRec() {
-  mediaRecorder && mediaRecorder.stop();
-  isRec = false;
-  clearInterval(recTimer);
-  document.getElementById('rec-btn').classList.remove('recording');
-  document.getElementById('rec-pill').classList.remove('on');
+function stopRec(){
+  recorder&&recorder.stop();
+  isRec=false;
+  clearInterval(recInt);
+  document.getElementById('recbtn').classList.remove('on');
+  document.getElementById('recpill').classList.remove('on');
 }
 
-function finishRec() {
-  const blob = new Blob(recChunks, { type: 'video/webm' });
-  const url = URL.createObjectURL(blob);
-  const now = new Date();
-  recordings.unshift({
-    url, dur: recSec,
-    name: 'Take ' + (recordings.length+1),
-    date: now.toLocaleDateString()
-  });
-  renderSaved();
+function finishRec(){
+  var blob=new Blob(chunks,{type:'video/webm'});
+  var url=URL.createObjectURL(blob);
+  var now=new Date();
+  recs.unshift({url:url,dur:recSec,name:'Take '+(recs.length+1),date:now.toLocaleDateString()});
   toast('Recording saved!');
 }
 
-// ── Teleprompter ───────────────────────────────────
-function togglePrompter() {
-  prompterOn = !prompterOn;
-  document.getElementById('btn-prompter').classList.toggle('on', prompterOn);
-  const zone = document.getElementById('prompter-zone');
-  zone.classList.toggle('on', prompterOn);
-  if (prompterOn) {
-    loadPrompt();
-    startScroll();
-  } else {
-    stopScroll();
-  }
+function togglePrompter(){
+  promptOn=!promptOn;
+  document.getElementById('btnp').classList.toggle('on',promptOn);
+  document.getElementById('prompter').classList.toggle('on',promptOn);
+  if(promptOn){loadPrompt();startScroll();}
+  else stopScroll();
 }
 
-function loadPrompt() {
-  const el = document.getElementById('prompter-text');
-  el.textContent = scriptText || 'No script yet. Go to Script tab to add one.';
-  prompterOffset = 0;
-  el.style.transform = 'translateY(0)';
+function loadPrompt(){
+  var el=document.getElementById('ptext');
+  el.textContent=scriptText||'No script yet. Go to Script tab to add one.';
+  pOffset=0;
+  el.style.transform='translateY(0)';
 }
 
-function startScroll() {
+function startScroll(){
   stopScroll();
-  const el = document.getElementById('prompter-text');
-  const zone = document.getElementById('prompter-zone');
-  prompterInterval = setInterval(() => {
-    const spd = parseInt(document.getElementById('speed-slider').value) / 800;
-    prompterOffset -= spd;
-    const max = -(el.scrollHeight + 40);
-    if (prompterOffset < max) prompterOffset = zone.clientHeight;
-    el.style.transform = `translateY(${prompterOffset}px)`;
-  }, 16);
+  var el=document.getElementById('ptext');
+  var wrap=document.getElementById('prompter');
+  promptInt=setInterval(function(){
+    var spd=parseInt(document.getElementById('speedslider').value)/800;
+    pOffset-=spd;
+    var max=-(el.scrollHeight+50);
+    if(pOffset<max) pOffset=wrap.clientHeight;
+    el.style.transform='translateY('+pOffset+'px)';
+  },16);
 }
 
-function stopScroll() {
-  clearInterval(prompterInterval);
-}
+function stopScroll(){clearInterval(promptInt);}
 
-function onSpeedChange(val) {
-  speed = parseInt(val);
-}
-
-// ── Script ─────────────────────────────────────────
-function saveScript() {
-  scriptText = document.getElementById('script-ta').value;
-  localStorage.setItem('tb_script', scriptText);
+function saveScript(){
+  scriptText=document.getElementById('scripta').value;
+  localStorage.setItem('tb_script',scriptText);
   closePanel('script');
   toast('Script saved!');
-  if (prompterOn) { loadPrompt(); startScroll(); }
+  if(promptOn){loadPrompt();startScroll();}
 }
 
-// ── Saved recordings ───────────────────────────────
-function renderSaved() {
-  const list = document.getElementById('saved-list');
-  if (!recordings.length) {
-    list.innerHTML = `<div class="empty">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><polygon points="5,3 19,12 5,21"/></svg>
-      <p>No recordings yet.<br>Hit the red button to start!</p>
-    </div>`;
+function renderSaved(){
+  var list=document.getElementById('savedlist');
+  if(!recs.length){
+    list.innerHTML='<div class="empty"><p>No recordings yet.<br>Hit the red button to start!</p></div>';
     return;
   }
-  list.innerHTML = recordings.map((r,i) => `
-    <div class="saved-item">
-      <div class="saved-ic">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>
-      </div>
-      <div class="saved-info">
-        <div class="saved-name">${r.name}</div>
-        <div class="saved-meta">${r.date} · ${Math.floor(r.dur/60)}:${(r.dur%60<10?'0':'')+r.dur%60}</div>
-      </div>
-      <div class="saved-actions">
-        <div class="sav-btn" onclick="playRec(${i})">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
-        </div>
-        <div class="sav-btn" onclick="dlRec(${i})">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        </div>
-      </div>
-    </div>
-  `).join('');
+  list.innerHTML=recs.map(function(r,i){
+    var m=Math.floor(r.dur/60),s=r.dur%60;
+    return '<div class="si"><div class="sic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg></div><div class="sinfo"><div class="sname">'+r.name+'</div><div class="smeta">'+r.date+' · '+m+':'+(s<10?'0':'')+s+'</div></div><div class="sacts"><div class="sab" onclick="playR('+i+')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg></div><div class="sab" onclick="dlR('+i+')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div></div></div>';
+  }).join('');
 }
 
-function playRec(i) {
-  const w = window.open('','_blank');
-  w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><video src="${recordings[i].url}" controls autoplay style="max-width:100%;max-height:100%"></video></body></html>`);
+function playR(i){var w=window.open('','_blank');w.document.write('<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh"><video src="'+recs[i].url+'" controls autoplay style="max-width:100%;max-height:100%"></video></body></html>');}
+function dlR(i){var a=document.createElement('a');a.href=recs[i].url;a.download=recs[i].name.replace(/\s/g,'_')+'.webm';a.click();toast('Downloading...');}
+
+function goTab(t){
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('on');});
+  document.getElementById('t'+t).classList.add('on');
+  if(t==='script'){document.getElementById('scripta').value=scriptText;document.getElementById('scriptpanel').classList.add('open');}
+  if(t==='saved'){renderSaved();document.getElementById('savedpanel').classList.add('open');}
+  if(t==='cam'){document.getElementById('scriptpanel').classList.remove('open');document.getElementById('savedpanel').classList.remove('open');}
 }
 
-function dlRec(i) {
-  const a = document.createElement('a');
-  a.href = recordings[i].url;
-  a.download = recordings[i].name.replace(/\s/g,'_') + '.webm';
-  a.click();
-  toast('Downloading...');
+function closePanel(name){
+  document.getElementById(name+'panel').classList.remove('open');
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('on');});
+  document.getElementById('tcam').classList.add('on');
 }
 
-// ── Tabs / Panels ──────────────────────────────────
-function showTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  document.getElementById('tab-'+tab).classList.add('on');
-  if (tab === 'script') {
-    document.getElementById('script-ta').value = scriptText;
-    document.getElementById('script-panel').classList.add('open');
-  }
-  if (tab === 'saved') {
-    renderSaved();
-    document.getElementById('saved-panel').classList.add('open');
-  }
-  if (tab === 'cam') {
-    document.getElementById('script-panel').classList.remove('open');
-    document.getElementById('saved-panel').classList.remove('open');
-  }
+function toast(msg){
+  var el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('on');
+  setTimeout(function(){el.classList.remove('on');},2000);
 }
 
-function closePanel(name) {
-  document.getElementById(name+'-panel').classList.remove('open');
-  document.getElementById('tab-cam').classList.add('on');
-  document.getElementById('tab-'+name).classList.remove('on');
-}
-
-// ── Toast ──────────────────────────────────────────
-function toast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2000);
-}
-
-// ── Init ───────────────────────────────────────────
 buildFilters();
 startCam();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 </script>
 </body>
 </html>
